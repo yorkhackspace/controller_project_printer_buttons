@@ -47,17 +47,44 @@ B11110110
 // 14- Error, Paper
 // 15- Photo 10x15
 
-int LED_ERR_BLACK = B00000001;
-int LED_ERR_COL = B00000010;
 int LED_POWER = B00001000;
+int LED_ERR_COL = B00000010;
+int LED_ERR_BLACK = B00000001;
+int LED_ERR_PAPER = B01000000;
+
 int LED_PLAIN_A4 = B00010000;
 int LED_PHOTO_A4 = B00100000;
-int LED_ERR_PAPER = B01000000;
 int LED_PHOTO_1015 = B10000000;
 
 int ERRORS = B01000011;
 
 int COPY_SETTINGS = B10110000;
+
+int allAnimLEDs = B11110011;
+
+int LEDANIM[] = {
+B00000010,
+B00000001,
+B01000000,
+B00010000,
+B00100000,
+B10000000,
+B00100000,
+B00010000,
+B01000000,
+B00000001
+};
+int animMax = 10;
+
+boolean buttonsIn[8];
+boolean buttonsHold[8];
+boolean buttonsPress[8];
+
+int btnScan = 1;
+int btnColour = 2;
+int btnBlack = 3;
+int btnCopy = 5;
+int btnCancel = 7;
 
 void setup() {
   // put your setup code here, to run once:
@@ -80,6 +107,11 @@ int otherLEDs = 0;
 int num = 0;
 
 boolean needDebounce = false;
+
+boolean anim = false;
+long animTime = 200;
+int animStep = 0;
+long lastTime;
 
 void loop() {
   if (digitalRead(PWR_BTN)==LOW){
@@ -106,60 +138,57 @@ void loop() {
   digitalWrite(LED_DATA_STORE, LOW);
   delay(1);
   digitalWrite(LED_DATA_STORE, HIGH);
-   
-  boolean btnScan = false;
-  boolean btnColour = false;
-  boolean btnBlack = false;
-  boolean btnCopy = false;
-  boolean btnCancel = false;  
   
   for (int i = 0; i<= 8-1; i++){
     int btnData = digitalRead(BTN_DATA_IN);
-    if (i == 1){
-      btnScan = !(boolean)(btnData);
+    buttonsIn[i] = !(boolean)(btnData);
+    if (buttonsIn[i]){
+        buttonsPress[i] = !buttonsHold[i];
+        buttonsHold[i] = true;
     }
-    
-    if (i == 2){
-      btnColour = !(boolean)(btnData);
+    else{
+      buttonsHold[i] = false;
+      buttonsPress[i] = false;
     }
-    
-    if (i == 3){
-      btnBlack = !(boolean)(btnData);
-    }
-    
-    if (i == 5){
-      btnCopy = !(boolean)(btnData);
-    }
-    
-    if (i == 7){
-      btnCancel = !(boolean)(btnData);
-    }
-    
     digitalWrite(LED_DATA_SHIFT, HIGH);
     digitalWrite(LED_DATA_SHIFT, LOW);
   }
-  if (btnScan){
+  if (buttonsPress[btnScan]){
     Serial.println("btnScan");
-    if (num < 9) num++;
+    anim = !anim;
   }
-  if (btnColour){
+  if (buttonsPress[btnColour]){
     Serial.println("btnColour");
     if (num > 0) num--;
   }
-  if (btnBlack){
+  if (buttonsPress[btnBlack]){
     Serial.println("btnBlack");
     if (num < 9) num++;
   }
-  if (btnCopy){
+  if (buttonsPress[btnCopy]){
     Serial.println("btnCopy");
-    otherLEDs = otherLEDs | LED_PLAIN_A4;
+    animTime = 200;
   }
-  if (btnCancel){
+  if (buttonsPress[btnCancel]){
     Serial.println("btnCancel");
+    animTime = 50;
   }
   if (needDebounce){
     needDebounce = false;
     debounce(PWR_BTN);
+  }
+  
+  if (anim){
+    long time = millis();
+    if (time > lastTime + animTime){
+      lastTime = time;
+      animStep++;
+      if (animStep > animMax-1){
+        animStep = 0;
+      }
+      int anim = LEDANIM[animStep];
+      otherLEDs =  (otherLEDs & (~allAnimLEDs)) | anim;
+    }
   }
 }
 
