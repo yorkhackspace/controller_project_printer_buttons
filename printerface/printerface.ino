@@ -1,3 +1,9 @@
+#include <Wire.h> 
+
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27,10,2);  // set the LCD address to 0x20 for a 16 chars and 2 line display
+
 int PWR_BTN = 12;
 
 int LED_DATA_OUT = 10;
@@ -87,6 +93,13 @@ int btnCopy = 5;
 int btnCancel = 7;
 
 void setup() {
+  
+  lcd.init();                      // initialize the lcd 
+  lcd.setCursor(0,0);  
+  lcd.print("Omniflux");
+  lcd.setCursor(0,1);
+  lcd.print("Hex Flange");
+  
   // put your setup code here, to run once:
   pinMode(PWR_BTN, INPUT_PULLUP);
   pinMode(LED_DATA_OUT, OUTPUT);
@@ -118,7 +131,17 @@ void loop() {
     needDebounce = true;
     otherLEDs = 
     (~(otherLEDs & LED_POWER))&(otherLEDs|LED_POWER);
-    Serial.println("PWR_BTN");
+    lcd.clear();
+    lcd.setCursor(0,0);  
+    lcd.print("Power is");
+    lcd.setCursor(0,1);
+    lcd.print("now ");    
+    if (otherLEDs & LED_POWER){
+      lcd.print("on");
+    }
+    else{
+      lcd.print("off");    
+    }
   }
 
   output = SevSeg[num] | (otherLEDs<<8);
@@ -156,22 +179,55 @@ void loop() {
   if (buttonsPress[btnScan]){
     Serial.println("btnScan");
     anim = !anim;
+    lcd.clear();
+    lcd.setCursor(0,0);  
+    lcd.print("Animation");
+    lcd.setCursor(0,1);
+    lcd.print("is now ");    
+    if (anim){
+      lcd.print("on");
+    }
+    else{
+      lcd.print("off");    
+    }
   }
   if (buttonsPress[btnColour]){
     Serial.println("btnColour");
     if (num > 0) num--;
+    lcd.clear();
+    lcd.setCursor(0,0);  
+    lcd.print("Digit is");
+    lcd.setCursor(0,1);
+    lcd.print("now ");    
+    lcd.print(num);
   }
   if (buttonsPress[btnBlack]){
     Serial.println("btnBlack");
     if (num < 9) num++;
+    lcd.clear();
+    lcd.setCursor(0,0);  
+    lcd.print("Digit is");
+    lcd.setCursor(0,1);
+    lcd.print("now ");    
+    lcd.print(num);
   }
   if (buttonsPress[btnCopy]){
     Serial.println("btnCopy");
     animTime = 200;
+    lcd.clear();
+    lcd.setCursor(0,0);  
+    lcd.print("Animation");
+    lcd.setCursor(0,1);
+    lcd.print("speed slow");    
   }
   if (buttonsPress[btnCancel]){
     Serial.println("btnCancel");
     animTime = 50;
+    lcd.clear();
+    lcd.setCursor(0,0);  
+    lcd.print("Animation");
+    lcd.setCursor(0,1);
+    lcd.print("speed fast");
   }
   if (needDebounce){
     needDebounce = false;
